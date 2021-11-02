@@ -1,32 +1,32 @@
 {
-  "name": "BE-TEAM-WORK-Strivazon",
+  "name": "be.sql-strivazon",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon -e js ./src/server.js"
+    "dev": "nodemon -e js -r dotenv/config ./src/server.js",
+    "start": "node ./src/server.js"
   },
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/iCarambaaa/be-team-work-Strivazon.git"
+    "type": "git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/iCarambaaa/be-team-work-Strivazon/issues"
-  },
-  "homepage": "https://github.com/iCarambaaa/be-team-work-Strivazon#readme",
+  "bugs": {},
   "dependencies": {
+    "cloudinary": "^1.27.1",
     "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "express-list-endpoints": "^6.0.0",
     "express-validator": "^6.13.0",
     "fs-extra": "^10.0.0",
     "http-errors": "^1.8.0",
     "multer": "^1.4.3",
+    "multer-storage-cloudinary": "^4.0.0",
     "pg": "^8.7.1",
     "uniqid": "^5.4.0"
   },

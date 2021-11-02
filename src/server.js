@@ -1,10 +1,9 @@
 import express from 'express';
 import listEndpoints from "express-list-endpoints";
-import productsRouter from "./services/products.js";
-import reviewsRouter from "./services/reviews.js";
+import router from "./services/routers.js";
 import { genericErrorHandler, badRequestHandler, unauthorizedHandler, notFoundHandler } from "./errorHandlers.js"
 import cors from "cors";
-
+import createTables from "./db/createTables.js";
 
 const server = express();
 
@@ -13,8 +12,8 @@ server.use(express.json())
 
 
 // ************************ ENDPOINTS **********************
-server.use("/products", productsRouter)
-server.use("/reviews", reviewsRouter)
+server.use("/products", router)
+
 
 // *********************** ERROR MIDDLEWARES ***************************
 
@@ -23,10 +22,13 @@ server.use(unauthorizedHandler)
 server.use(notFoundHandler)
 server.use(genericErrorHandler)
 
-const port = 3001
+const PORT = process.env.PORT;
 
 console.table(listEndpoints(server))
 
-server.listen(port, () => console.log("listening on port:", port))
+server.listen(PORT, async () => {
+    console.log("Server is running on port:", PORT);
+    await createTables();
+  })
 
 server.on('error', (err) => console.log(err))

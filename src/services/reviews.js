@@ -1,111 +1,58 @@
-import express from "express";
-import uniqid from "uniqid";
-import createError from "http-errors"
-import {readReviews, writeReviews} from "../lib/fs-tools.js"
-import productsRouter from "./products.js";
-import { reviewsValidationMiddlewares } from "../lib/validation.js";
-import { validationResult } from "express-validator"
+import pool from "../db/connect.js";
 
-
-const reviewsRouter = express.Router()
-
-// GET all reviews
-reviewsRouter.get("/", async(req, res, next) => {
-        try {
-            const reviews = await readReviews()
-            res.status(200).send(reviews)
-        } catch (error) {
-            next(error)
-        }
-})
-
-// GET individual review
-reviewsRouter.get("/:id", async(req, res, next) => {
-    try {
-        const reviews = await readReviews()
-
-        const singlereview = reviews.find(review => review.id === req.params.id)
-
-        if (singlereview) {
-            res.status(200).send(singlereview)
-        } else {
-            next(createError(404, `review with id ${req.params.id} not found`))
-        }
-
-    } catch (error) {
-        next(error)
+async function getReviews(req,res,next) {
+  try {
+    const data = await pool.query("SELECT * FROM reviews WHERE product_id=$1 ORDER BY id ASC;", [req.params.id]);
+    if(data.rows.length) {
+      res.send(data.rows);
+    } else {
+      res.status(400).send("No reviews found");
     }
-})
+  } catch (error) {
+    next(error);
+  }
+}
 
 
-// POST review
+async function postNewReview(req,res,next) {
+  try {
+    const {comment, rate, product_id} = req.body;
+    const data = await pool.query("INSERT INTO reviews(comment, rate, product_id) VALUES($1, $2, $3) RETURNING *;", [
+      comment, rate, product_id
+    ]);
 
-reviewsRouter.post("/", reviewsValidationMiddlewares, async(req, res, next) => {
-    try {
-        const errors = validationResult(req)
-
-        if(errors.isEmpty()){
-            const reviews = await readReviews()
-
-            const newReview = {...req.body, 
-                id: uniqid(), createdAt: new Date()}
-    
-            reviews.push(newReview)
-    
-            await writeReviews(reviews)
-          
-            res.status(201).send(newReview.id)
-        }else{
-            next(createError(400, {errors}))
-        }
-       
-
-    } catch (error) {
-        next(error)
-    }
-})
-
-// DELETE 
-
-reviewsRouter.delete("/:id", async(req, res, next) => {
-
- try {
-        const reviews = await readReviews()
-
-        const remainingReviews = reviews.filter(review => review.id !== req.params.id)
-
-        writeReviews(remainingReviews)
-
-        res.status(200).send(`review with id ${req.params.id} deleted successfully`)
-
-    } catch (error) {
-        next(error)
-    }
-
-})
-
-//PUT
-
-reviewsRouter.put("/:id", reviewsValidationMiddlewares, async(req, res, next)=> {
-    try {
-        const reviews = await readReviews()
-
-        const singleReviewIndex = reviews.findIndex(index => index.id === req.params.id)
-
-        const singleReview = reviews[singleReviewIndex]
-
-        const updatedReview = {...singleReview, ...req.body, updatedAt: new Date()} 
-
-        reviews[singleReviewIndex] = updatedReview
-        writeReviews(reviews)
-
-        res.status(200).send(`review with id ${req.params.id} updated successfully`)
-
-    } catch (error) {
-        next(error)
-    }
-
-})
+    res.send(data.rows[0]);
+  } catch (error) {
+    next(error);
+  }
+}
 
 
-export default reviewsRouter
+async function updateReviewById(req,res,next) {
+  try {
+    const { comment, rate, product_id } = req.body;
+    const data = await pool.query("UPDATE reviews SET comment=$1, rate=$2, product_id=$3 WHERE id=$4 RETURNING *;", [
+      comment, rate, product_id, req.params.reviewId
+    ])
+    res.send(data.rows[0]);
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+async function deleteReviewById(req,res,next) {
+  try {
+    await pool.query("DELETE FROM reviews WHERE id=$1", [req.params.reviewId]);
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+const reviews = {
+  getReviews, postNewReview, deleteReviewById, updateReviewById
+}
+
+export default reviews;
