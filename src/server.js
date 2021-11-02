@@ -5,6 +5,7 @@ import reviewsRouter from "./services/reviews.js";
 import { genericErrorHandler, badRequestHandler, unauthorizedHandler, notFoundHandler } from "./errorHandlers.js"
 import cors from "cors";
 
+
 const server = express();
 
 server.use(cors());
